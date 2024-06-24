@@ -2,13 +2,11 @@ process getMetadata {
     conda './environment.yml'
 
     input:
-    path '*.WAV'
+    path 'audio_dir'
 
     output:
     stdout
 
     script:
-    '''
-    ls *.WAV
-    '''
+    template 'get_metadata.sh'
 }

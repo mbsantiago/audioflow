@@ -18,9 +18,6 @@ workflow {
         params.dataHost,
         params.audioDir
     )
-    getMetadata(outputFiles) | view
-}
 
-output {
-    directory 'results'
+    getMetadata(outputFiles) | view
 }
