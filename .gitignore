@@ -178,3 +178,4 @@ cython_debug/
 
 nxf-tmp.*
 results
+report
