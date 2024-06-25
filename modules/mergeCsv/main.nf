@@ -1,7 +1,4 @@
 process mergeCsv {
-    debug true
-    cache false
-
     input:
     path 'table*.csv'
 

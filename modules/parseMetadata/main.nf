@@ -1,4 +1,4 @@
-process getMetadata {
+process parseMetadata {
     input:
     path 'inputDir'
 

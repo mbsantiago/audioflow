@@ -6,8 +6,11 @@ params.chunkSize = 3
 include { splitFile } from './modules/splitFile'
 include { copyFiles } from './modules/copyFiles'
 include { mergeCsv } from './modules/mergeCsv'
-include { getMetadata } from './modules/parseMetadata'
+include { parseMetadata } from './modules/parseMetadata'
 include { extractFeatures } from './modules/extractFeatures'
+include { mergeParquet } from './modules/mergeParquet'
+
+nextflow.preview.output = true
 
 workflow {
     main:
@@ -18,7 +21,21 @@ workflow {
         params.dataHost,
         params.audioDir
     )
-    metadataFiles = getMetadata(outputFiles).collect()
+    metadataFiles = parseMetadata(outputFiles).collect()
     featureFiles = extractFeatures(outputFiles).collect()
-    view(featureFiles)
+    metadata = mergeCsv(metadataFiles)
+    features = mergeParquet(featureFiles)
+
+    emit:
+    metadata
+    features
+
+    publish:
+    metadata >> 'metadata'
+    features >> 'features'
+}
+
+output {
+    directory 'results'
+    mode 'copy'
 }
