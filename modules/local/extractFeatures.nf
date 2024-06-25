@@ -3,9 +3,6 @@ params.iterator = 'tensorflow'
 params.batch_size = 32
 
 process extractFeatures {
-    debug true
-    maxForks 1
-
     input:
     path 'inputDir'
 
@@ -14,7 +11,7 @@ process extractFeatures {
 
     script:
     """
-    python $moduleDir/extract_features.py \
+    extract_features.py \
         --directory $inputDir \
         --output features.parquet \
         --model $params.model \

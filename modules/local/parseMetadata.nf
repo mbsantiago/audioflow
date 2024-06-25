@@ -6,5 +6,5 @@ process parseMetadata {
     path 'metadata.csv'
 
     script:
-    """python $moduleDir/extract_metadata.py --directory $inputDir --output metadata.csv"""
+    """parse_metadata.py --directory $inputDir --output metadata.csv"""
 }

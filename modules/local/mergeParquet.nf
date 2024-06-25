@@ -6,5 +6,5 @@ process mergeParquet {
     path 'merged.parquet'
 
     script:
-    """python $moduleDir/merge_parquet.py tables/*.parquet --output merged.parquet"""
+    """merge_parquet.py tables/*.parquet --output merged.parquet"""
 }

@@ -3,12 +3,12 @@ params.audioDir = '/mnt/gpfs/live/ritd-ag-project-rd00lk-kejon62/'
 params.dataHost = 'rdss'
 params.chunkSize = 3
 
-include { splitFile } from './modules/splitFile'
-include { copyFiles } from './modules/copyFiles'
-include { mergeCsv } from './modules/mergeCsv'
-include { parseMetadata } from './modules/parseMetadata'
-include { extractFeatures } from './modules/extractFeatures'
-include { mergeParquet } from './modules/mergeParquet'
+include { splitFile } from './modules/local/splitFile'
+include { copyFiles } from './modules/local/copyFiles'
+include { mergeCsv } from './modules/local/mergeCsv'
+include { parseMetadata } from './modules/local/parseMetadata'
+include { extractFeatures } from './modules/local/extractFeatures'
+include { mergeParquet } from './modules/local/mergeParquet'
 
 nextflow.preview.output = true
 
