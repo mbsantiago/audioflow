@@ -1,13 +1,11 @@
-nextflow.preview.output = true
-
 params.fileList = 'example_files.txt'
 params.audioDir = '/mnt/gpfs/live/ritd-ag-project-rd00lk-kejon62/'
 params.dataHost = 'rdss'
 params.chunkSize = 3
 
-include { splitFile } from './modules/local/splitFile'
-include { copyFiles } from './modules/local/copyFiles'
-include { getMetadata } from './modules/local/audio/getAudioMothMetadata'
+include { splitFile } from './modules/splitFile'
+include { copyFiles } from './modules/copyFiles'
+include { getMetadata } from './modules/audio/parseMetadata'
 
 workflow {
     main:

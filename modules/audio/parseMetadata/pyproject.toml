@@ -1,0 +1,33 @@
+[project]
+name = "parsemetadata"
+version = "0.1.0"
+description = "Add your description here"
+authors = [
+    { name = "Santiago Martinez Balvanera", email = "santiago.mbal@gmail.com" },
+]
+dependencies = [
+    "metamoth>=1.2.1",
+    "pandas>=2.2.2",
+]
+readme = "README.md"
+requires-python = ">= 3.9"
+
+[tool.rye]
+managed = true
+dev-dependencies = []
+
+[tool.hatch.metadata]
+allow-direct-references = true
+
+[tool.pyright]
+venvPath = "."
+venv = ".venv"
+pythonVersion = "3.11"
+
+[tool.ruff]
+line-length = 79
+target-version = "py311"
+
+[tool.ruff.format]
+docstring-code-format = true
+docstring-code-line-length = 60

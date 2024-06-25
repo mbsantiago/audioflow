@@ -1,5 +1,5 @@
 process getMetadata {
-    conda './environment.yml'
+    debug true
 
     input:
     path 'audio_dir'
