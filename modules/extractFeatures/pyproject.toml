@@ -1,0 +1,32 @@
+[project]
+name = "extractfeatures"
+version = "0.1.0"
+description = "Add your description here"
+authors = [
+    { name = "mbsantiago", email = "santiago.mbal@gmail.com" }
+]
+dependencies = [
+    "audioclass[tensorflow]>=0.2.0",
+]
+readme = "README.md"
+requires-python = ">= 3.8"
+
+[tool.rye]
+managed = true
+dev-dependencies = []
+
+[tool.hatch.metadata]
+allow-direct-references = true
+
+[tool.pyright]
+venvPath = "."
+venv = ".venv"
+pythonVersion = "3.11"
+
+[tool.ruff]
+line-length = 79
+target-version = "py311"
+
+[tool.ruff.format]
+docstring-code-format = true
+docstring-code-line-length = 60

@@ -5,7 +5,9 @@ params.chunkSize = 3
 
 include { splitFile } from './modules/splitFile'
 include { copyFiles } from './modules/copyFiles'
-include { getMetadata } from './modules/audio/parseMetadata'
+include { mergeCsv } from './modules/mergeCsv'
+include { getMetadata } from './modules/parseMetadata'
+include { extractFeatures } from './modules/extractFeatures'
 
 workflow {
     main:
@@ -16,5 +18,7 @@ workflow {
         params.dataHost,
         params.audioDir
     )
-    getMetadata(outputFiles) | view
+    metadataFiles = getMetadata(outputFiles).collect()
+    featureFiles = extractFeatures(outputFiles).collect()
+    view(featureFiles)
 }

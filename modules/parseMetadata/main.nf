@@ -1,7 +1,4 @@
 process getMetadata {
-    debug true
-    cache false
-
     input:
     path 'inputDir'
 
@@ -9,5 +6,5 @@ process getMetadata {
     path 'metadata.csv'
 
     script:
-    template 'get_metadata.sh'
+    """python $moduleDir/extract_metadata.py --directory $inputDir --output metadata.csv"""
 }
