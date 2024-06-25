@@ -1,10 +1,10 @@
-biome_health_project_files/country_files/borneo/PC_Recordings/PC-B10/2018-05-16/00-00-00_dur=1200secs.wav
-biome_health_project_files/country_files/borneo/PC_Recordings/PC-B10/2018-05-16/22-00-00_dur=1200secs.wav
-biome_health_project_files/country_files/borneo/PC_Recordings/PC-B10/2018-05-16/02-00-00_dur=1200secs.wav
-biome_health_project_files/country_files/borneo/PC_Recordings/PC-B10/2018-05-16/23-00-00_dur=1200secs.wav
-biome_health_project_files/country_files/borneo/PC_Recordings/PC-B10/2018-05-16/01-00-00_dur=1200secs.wav
-biome_health_project_files/country_files/borneo/PC_Recordings/PC-B10/2018-05-16/21-00-00_dur=1200secs.wav
-biome_health_project_files/country_files/borneo/PC_Recordings/PC-B10/2018-04-09/00-00-00_dur=1200secs.wav
-biome_health_project_files/country_files/borneo/PC_Recordings/PC-B10/2018-04-09/22-00-00_dur=1200secs.wav
-biome_health_project_files/country_files/borneo/PC_Recordings/PC-B10/2018-04-09/02-00-00_dur=1200secs.wav
-biome_health_project_files/country_files/borneo/PC_Recordings/PC-B10/2018-04-09/23-00-00_dur=1200secs.wav
+biome_health_project_files/country_files/kenya/raw_data_2021/BHP2021_AUDO MOTHS/Mara-Triangle_Dec/MT40_CT/20211116_130000.WAV
+biome_health_project_files/country_files/kenya/raw_data_2021/BHP2021_AUDO MOTHS/Mara-Triangle_Dec/MT40_CT/20211123_050000.WAV
+biome_health_project_files/country_files/kenya/raw_data_2021/BHP2021_AUDO MOTHS/Mara-Triangle_Dec/MT40_CT/20211120_114500.WAV
+biome_health_project_files/country_files/kenya/raw_data_2021/BHP2021_AUDO MOTHS/Mara-Triangle_Dec/MT40_CT/20211114_043000.WAV
+biome_health_project_files/country_files/kenya/raw_data_2021/BHP2021_AUDO MOTHS/Mara-Triangle_Dec/MT40_CT/20211109_064500.WAV
+biome_health_project_files/country_files/kenya/raw_data_2021/BHP2021_AUDO MOTHS/Mara-Triangle_Dec/MT40_CT/20211119_221500.WAV
+biome_health_project_files/country_files/kenya/raw_data_2021/BHP2021_AUDO MOTHS/Mara-Triangle_Dec/MT40_CT/20211116_091500.WAV
+biome_health_project_files/country_files/kenya/raw_data_2021/BHP2021_AUDO MOTHS/Mara-Triangle_Dec/MT40_CT/20211125_211500.WAV
+biome_health_project_files/country_files/kenya/raw_data_2021/BHP2021_AUDO MOTHS/Mara-Triangle_Dec/MT40_CT/20211107_023000.WAV
+biome_health_project_files/country_files/kenya/raw_data_2021/BHP2021_AUDO MOTHS/Mara-Triangle_Dec/MT40_CT/20211113_001500.WAV

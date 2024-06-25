@@ -1,11 +1,12 @@
 process getMetadata {
     debug true
+    cache false
 
     input:
-    path 'audio_dir'
+    path 'inputDir'
 
     output:
-    stdout
+    path 'metadata.csv'
 
     script:
     template 'get_metadata.sh'

@@ -1,4 +1,3 @@
 #!/bin/bash
 
-echo "HOLA"
-python $moduleDir/extract_metadata.py
+python $moduleDir/extract_metadata.py --directory $inputDir --output metadata.csv

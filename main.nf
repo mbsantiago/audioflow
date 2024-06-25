@@ -16,6 +16,5 @@ workflow {
         params.dataHost,
         params.audioDir
     )
-
     getMetadata(outputFiles) | view
 }

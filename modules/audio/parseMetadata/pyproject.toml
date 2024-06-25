@@ -6,8 +6,9 @@ authors = [
     { name = "Santiago Martinez Balvanera", email = "santiago.mbal@gmail.com" },
 ]
 dependencies = [
-    "metamoth>=1.2.1",
+    "metamoth>=1.2.2",
     "pandas>=2.2.2",
+    "soundfile>=0.12.1",
 ]
 readme = "README.md"
 requires-python = ">= 3.9"

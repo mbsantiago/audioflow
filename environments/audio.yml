@@ -233,7 +233,7 @@ dependencies:
       - cython==3.0.10
       - dnspython==2.6.1
       - email-validator==2.2.0
-      - metamoth==1.2.1
+      - metamoth==1.2.2
       - pyarrow==16.1.0
       - pycparser==2.22
       - soundevent==2.0.1
