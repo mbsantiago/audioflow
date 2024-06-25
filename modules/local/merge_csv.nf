@@ -1,4 +1,4 @@
-process mergeCsv {
+process merge_csv {
     input:
     path 'table*.csv'
 

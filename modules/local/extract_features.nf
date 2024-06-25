@@ -2,17 +2,20 @@ params.model = 'birdnet_analyzer'
 params.iterator = 'tensorflow'
 params.batch_size = 32
 
-process extractFeatures {
+process extract_features {
+    maxForks 1
+
     input:
-    path 'inputDir'
+    path 'input_dir'
 
     output:
-    path 'features.parquet'
+    path 'features.parquet', emit: features
+    val true, emit: is_ready
 
     script:
     """
     extract_features.py \
-        --directory $inputDir \
+        --directory $input_dir \
         --output features.parquet \
         --model $params.model \
         --iterator $params.iterator \

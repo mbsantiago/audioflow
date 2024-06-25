@@ -1,4 +1,4 @@
-process mergeParquet {
+process merge_parquet {
     input:
     path 'tables/*.parquet'
 

@@ -1,30 +1,25 @@
-params.fileList = 'example_files.txt'
-params.audioDir = '/mnt/gpfs/live/ritd-ag-project-rd00lk-kejon62/'
-params.dataHost = 'rdss'
-params.chunkSize = 3
+params.file_list = 'example_files.txt'
+params.chunk_size = 3
 
-include { splitFile } from './modules/local/splitFile'
-include { copyFiles } from './modules/local/copyFiles'
-include { mergeCsv } from './modules/local/mergeCsv'
-include { parseMetadata } from './modules/local/parseMetadata'
-include { extractFeatures } from './modules/local/extractFeatures'
-include { mergeParquet } from './modules/local/mergeParquet'
+include { merge_csv } from './modules/local/merge_csv'
+include { merge_parquet } from './modules/local/merge_parquet'
+include { split_file } from './modules/local/split_file'
+
+include { process_audio_files } from './workflows/process_audio_files'
 
 nextflow.preview.output = true
 
 workflow {
     main:
-    file = channel.fromPath(params.fileList)
-    fileChunks = splitFile(file, params.chunkSize) | flatten
-    outputFiles = copyFiles(
-        fileChunks,
-        params.dataHost,
-        params.audioDir
-    )
-    metadataFiles = parseMetadata(outputFiles).collect()
-    featureFiles = extractFeatures(outputFiles).collect()
-    metadata = mergeCsv(metadataFiles)
-    features = mergeParquet(featureFiles)
+    file = channel.fromPath(params.file_list)
+    file_chunks = split_file(file, params.chunk_size) | flatten
+
+    process_audio_files(file_chunks)
+    metadata_files = process_audio_files.out.metadata.collect()
+    feature_files = process_audio_files.out.features.collect()
+
+    metadata = merge_csv(metadata_files)
+    features = merge_parquet(feature_files)
 
     emit:
     metadata
