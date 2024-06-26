@@ -1,6 +1,6 @@
 params.model = 'birdnet_analyzer'
 params.iterator = 'tensorflow'
-params.batch_size = 32
+params.batch_size = 64
 
 process extract_features {
     maxForks 1
