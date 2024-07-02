@@ -3,7 +3,7 @@ params.data_host = 'rdss'
 
 include { copy_files } from '../modules/local/copy_files'
 include { parse_metadata } from '../modules/local/parse_metadata'
-include { extract_features } from '../modules/local/extract_features'
+include { extract_features_and_detections } from '../modules/local/extract_features_and_detections'
 include { clean_files } from '../modules/local/clean_files'
 
 workflow process_audio_files {
@@ -17,14 +17,15 @@ workflow process_audio_files {
         params.audio_dir
     )
     parse_metadata(audio_files)
-    extract_features(audio_files)
+    extract_features_and_detections(audio_files)
     clean_files(
         audio_files,
         parse_metadata.out.is_ready,
-        extract_features.out.is_ready,
+        extract_features_and_detections.out.is_ready,
     )
 
     emit:
     metadata = parse_metadata.out.metadata
-    features = extract_features.out.features
+    features = extract_features_and_detections.out.features
+    detections = extract_features_and_detections.out.detections
 }
