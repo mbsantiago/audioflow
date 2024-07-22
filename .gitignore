@@ -179,3 +179,5 @@ cython_debug/
 nxf-tmp.*
 results
 report
+*.ipynb
+bh_kenya_audio_files.txt
