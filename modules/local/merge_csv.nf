@@ -3,7 +3,7 @@ process merge_csv {
     path 'table*.csv'
 
     output:
-    path 'merged.csv'
+    path 'merged.csv', emit: merged
 
     shell:
     '''

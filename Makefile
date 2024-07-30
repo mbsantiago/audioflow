@@ -12,5 +12,6 @@ clean-logs:
 
 clean-results:
 	rm -rf results
+	rm -rf outputs
 
 clean-all: clean-work clean-logs clean-results

@@ -3,7 +3,7 @@ process merge_parquet {
     path 'tables/*.parquet'
 
     output:
-    path 'merged.parquet'
+    path 'merged.parquet', emit: merged
 
     script:
     """merge_parquet.py tables/*.parquet --output merged.parquet"""
