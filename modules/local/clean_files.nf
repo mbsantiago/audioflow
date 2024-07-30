@@ -1,5 +1,4 @@
 process clean_files {
-    debug true
     cache false
 
     input:

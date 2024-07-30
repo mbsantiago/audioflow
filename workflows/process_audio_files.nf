@@ -1,5 +1,5 @@
-params.audio_dir = '/mnt/gpfs/live/ritd-ag-project-rd00lk-kejon62/'
-params.data_host = 'rdss'
+params.audio_dir = '/home/user/audio/'
+params.data_host = 'username@hostname'
 
 include { copy_files } from '../modules/local/copy_files'
 include { parse_metadata } from '../modules/local/parse_metadata'

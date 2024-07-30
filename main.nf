@@ -1,5 +1,7 @@
-params.file_list = 'example_files.txt'
 params.chunk_size = 200
+params.file_list = 'example_files.txt'
+params.audio_dir = '/home/user/audio/'
+params.data_host = 'username@hostname'
 
 include { merge_csv } from './modules/local/merge_csv'
 include { merge_parquet as merge_detections; merge_parquet as merge_features } from './modules/local/merge_parquet'
@@ -12,9 +14,11 @@ nextflow.preview.output = true
 workflow {
     main:
     file = channel.fromPath(params.file_list)
+
     file_chunks = split_file(file, params.chunk_size) | flatten
 
     process_audio_files(file_chunks)
+
     metadata_files = process_audio_files.out.metadata.collect()
     feature_files = process_audio_files.out.features.collect()
     detection_files = process_audio_files.out.detections.collect()

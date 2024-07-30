@@ -1,4 +1,6 @@
 process copy_files {
+    label 'network'
+
     input:
     path file_list
     val host

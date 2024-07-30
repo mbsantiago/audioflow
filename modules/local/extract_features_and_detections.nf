@@ -4,7 +4,7 @@ params.batch_size = 32
 params.threshold = 0.1
 
 process extract_features_and_detections {
-    maxForks 1
+    label 'gpu'
 
     input:
     path 'input_dir'

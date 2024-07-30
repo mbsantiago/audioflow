@@ -3,7 +3,7 @@ params.iterator = 'tensorflow'
 params.batch_size = 32
 
 process extract_features {
-    maxForks 1
+    label 'gpu'
 
     input:
     path 'input_dir'
