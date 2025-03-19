@@ -30,8 +30,6 @@ def load_model(model: str) -> ClipClassificationModel:
     if model == "batdetect2":
         from batdetect2 import api
 
-        return api.load()
-
     raise ValueError(f"Unknown model {model}")
 
 
