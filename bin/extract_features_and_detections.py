@@ -1,6 +1,5 @@
 #!/bin/env python
 
-import os
 import argparse
 import logging
 from pathlib import Path
@@ -9,37 +8,36 @@ import pandas as pd
 from soundevent import data
 from audioclass.models.base import ClipClassificationModel
 from audioclass.batch.base import BaseIterator
-from batdetect2 import api  # Assuming batdetect2 is the API you're using
 
 
-def load_model(model: str):
+def load_model(model: str) -> ClipClassificationModel:
     if model == "perch":
         from audioclass.models.perch import Perch
+
         return Perch.load()
 
     if model == "birdnet":
         from audioclass.models.birdnet import BirdNET
+
         return BirdNET.load()
 
     if model == "birdnet_analyzer":
         from audioclass.models.birdnet_analyzer import BirdNETAnalyzer
-        return BirdNETAnalyzer.load()
 
-    if model == "batdetect2":
-        from batdetect2 import api
-        return api  # Return api directly
+        return BirdNETAnalyzer.load()
 
     raise ValueError(f"Unknown model {model}")
 
 
 def get_iterator(
-    model: ClipClassificationModel,    
+    model: ClipClassificationModel,
     directory: Path,
     iterator: str = "tensorflow",
     batch_size: int = 32,
 ) -> BaseIterator:
     if iterator == "tensorflow":
         from audioclass.batch.tensorflow import TFDatasetIterator
+
         return TFDatasetIterator.from_directory(
             directory,
             samplerate=model.samplerate,
@@ -49,6 +47,7 @@ def get_iterator(
 
     if iterator == "simple":
         from audioclass.batch.simple import SimpleIterator
+
         return SimpleIterator.from_directory(
             directory,
             samplerate=model.samplerate,
@@ -59,42 +58,40 @@ def get_iterator(
     raise ValueError(f"Unknown iterator {iterator}")
 
 
-def save_detections(
-    detections: list[dict],  # Update this to use a list of dicts
+def save_features(
+    predictions: list[data.ClipPrediction],
     output: Path,
-    threshold: float = 0.3,
 ) -> None:
-    # Filter detections based on the threshold and save them
     pd.DataFrame(
         [
             {
-                "path": detection['filename'],
-                "start_time": detection['start_time'],
-                "end_time": detection['end_time'],
-                "species": detection['species'],
-                "logit": detection['logit'],
-                "low_freq": detection['low_freq'],
-                "high_freq": detection['high_freq'],
+                "path": str(prediction.clip.recording.path),
+                "start_time": prediction.clip.start_time,
+                "end_time": prediction.clip.end_time,
+                **{feat.name: feat.value for feat in prediction.features},
             }
-            for detection in detections
-            if detection['logit'] >= threshold
+            for prediction in predictions
         ]
     ).to_parquet(output, index=False)
 
-def save_features(
-    detections: list[dict],  # List of detection dictionaries
+
+def save_detections(
+    predictions: list[data.ClipPrediction],
     output: Path,
+    threshold: float = 0.1,
 ) -> None:
-    # Save features corresponding to detections
     pd.DataFrame(
         [
             {
-                "path": detection['filename'],
-                "start_time": detection['start_time'],
-                "end_time": detection['end_time'],
-                **{f"feature_{i}": detection.get(f"feature_{i}") for i in range(len(detection)-7)},  # Assuming 7 is the detection info fields
+                "path": str(prediction.clip.recording.path),
+                "start_time": prediction.clip.start_time,
+                "end_time": prediction.clip.end_time,
+                "species": tag.tag.value,
+                "score": tag.score,
             }
-            for detection in detections
+            for prediction in predictions
+            for tag in prediction.tags
+            if tag.score >= threshold
         ]
     ).to_parquet(output, index=False)
 
@@ -119,7 +116,7 @@ def parse_args():
         type=str,
         default="birdnet_analyzer",
         help="Model to use",
-        choices=["birdnet", "birdnet_analyzer", "perch", "batdetect2"],
+        choices=["birdnet", "birdnet_analyzer", "perch"],
     )
     parser.add_argument(
         "--iterator",
@@ -146,77 +143,17 @@ def parse_args():
 def main():
     logging.basicConfig(level=logging.INFO)
     args = parse_args()
-
-    # Load the model (batdetect2 or another model)
     model = load_model(args.model)
-
-    # Set batdetect2 configuration parameters
-    detection_threshold = 0.75
-    max_duration = 3
-    config = api.get_config(
-        detection_threshold=detection_threshold,
-        time_expansion_factor=1,
-        max_duration=max_duration,
+    iterator = get_iterator(
+        model,
+        args.directory,
+        iterator=args.iterator,
+        batch_size=args.batch_size,
     )
+    output = model.process_iterable(iterator)
+    save_features(output, args.features_output)
+    save_detections(output, args.detections_output, threshold=args.threshold)
 
-    # Initialize lists to store detections and features
-    all_detections = []
-    all_features = []
-
-    # Iterate through files in the provided directory
-    for root, dirs, files in os.walk(args.directory):
-        for file_name in files:
-            if file_name.endswith(".WAV"):  # Process only WAV files
-                audio_file = os.path.join(root, file_name)  # Full file path
-                logging.info(f"Processing {audio_file}")
-
-                try:
-                    # Load audio and generate the spectrogram
-                    audio = api.load_audio(audio_file, max_duration=max_duration)  # Load audio
-                    spec = api.generate_spectrogram(audio, config=config)  # Generate spectrogram
-
-                    # Process the spectrogram to get detections and features
-                    detections, features = api.process_spectrogram(spec, config=config)
-
-                    # Loop over the detections to save detection info and features
-                    for i, detection in enumerate(detections):
-                        result = {
-                            'filename': audio_file,
-                            'species': detection['class'],
-                            'logit': detection['det_prob'],
-                            'start_time': detection['start_time'],
-                            'end_time': detection['end_time'],
-                            'low_freq': detection['low_freq'],
-                            'high_freq': detection['high_freq'],
-                        }
-
-                        # Extract and save the features for each detection
-                        if features.shape[0] > i:
-                            feature_row = features[i]
-                            for j, feature_value in enumerate(feature_row):
-                                result[f'feature_{j}'] = feature_value
-
-                        # Append the result to the detections and features lists
-                        all_detections.append(result)
-                        all_features.append(result)
-
-                except Exception as e:
-                    logging.error(f"Error processing {audio_file}: {e}")
-
-    # After processing all files, convert the results into DataFrames
-    detections_df = pd.DataFrame(all_detections)
-    features_df = pd.DataFrame(all_features)
-
-    # Save results to output files (Parquet format)
-    if not detections_df.empty:
-        logging.info(f"Saving detections to {args.detections_output}")
-        detections_df.to_parquet(args.detections_output, index=False)
-
-    if not features_df.empty:
-        logging.info(f"Saving features to {args.features_output}")
-        features_df.to_parquet(args.features_output, index=False)
-
-    logging.info("Processing complete!")
 
 if __name__ == "__main__":
     main()
