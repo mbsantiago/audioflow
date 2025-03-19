@@ -27,9 +27,7 @@ def load_model(model: str) -> ClipClassificationModel:
         return BirdNETAnalyzer.load()
 
     if model == "batdetect2": 
-        from batdetect2.cli import detect
-
-        return batdetect2.load() 
+        from batdetect2.cli import detect 
 
     raise ValueError(f"Unknown model {model}")
 
