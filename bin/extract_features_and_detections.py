@@ -15,23 +15,19 @@ from batdetect2 import api  # Assuming batdetect2 is the API you're using
 def load_model(model: str):
     if model == "perch":
         from audioclass.models.perch import Perch
-
         return Perch.load()
 
     if model == "birdnet":
         from audioclass.models.birdnet import BirdNET
-
         return BirdNET.load()
 
     if model == "birdnet_analyzer":
         from audioclass.models.birdnet_analyzer import BirdNETAnalyzer
-
         return BirdNETAnalyzer.load()
 
     if model == "batdetect2":
         from batdetect2 import api
-
-        return api
+        return api  # Return api directly
 
     raise ValueError(f"Unknown model {model}")
 
@@ -44,7 +40,6 @@ def get_iterator(
 ) -> BaseIterator:
     if iterator == "tensorflow":
         from audioclass.batch.tensorflow import TFDatasetIterator
-
         return TFDatasetIterator.from_directory(
             directory,
             samplerate=model.samplerate,
@@ -54,7 +49,6 @@ def get_iterator(
 
     if iterator == "simple":
         from audioclass.batch.simple import SimpleIterator
-
         return SimpleIterator.from_directory(
             directory,
             samplerate=model.samplerate,
@@ -155,7 +149,16 @@ def main():
 
     # Load the model (batdetect2 or another model)
     model = load_model(args.model)
-    
+
+    # Set batdetect2 configuration parameters
+    detection_threshold = 0.75
+    max_duration = 3
+    config = api.get_config(
+        detection_threshold=detection_threshold,
+        time_expansion_factor=1,
+        max_duration=max_duration,
+    )
+
     # Iterate through files in the provided directory
     for root, dirs, files in os.walk(args.directory):
         for file_name in files:
@@ -165,7 +168,7 @@ def main():
 
                 try:
                     # Load audio and generate the spectrogram
-                    audio = api.load_audio(audio_file, max_duration=args.max_duration)  # Load audio
+                    audio = api.load_audio(audio_file, max_duration=max_duration)  # Load audio
                     spec = api.generate_spectrogram(audio, config=config)  # Generate spectrogram
 
                     # Process the spectrogram to get detections and features
