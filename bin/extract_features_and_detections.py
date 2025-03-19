@@ -159,6 +159,10 @@ def main():
         max_duration=max_duration,
     )
 
+    # Initialize lists to store detections and features
+    all_detections = []
+    all_features = []
+
     # Iterate through files in the provided directory
     for root, dirs, files in os.walk(args.directory):
         for file_name in files:
@@ -192,12 +196,27 @@ def main():
                             for j, feature_value in enumerate(feature_row):
                                 result[f'feature_{j}'] = feature_value
 
-                        # Here, you would append or store 'result' in the appropriate way.
-                        # For example, you can append it to a list for further saving.
-                        # You can store the results as you were before in the DataFrame format.
-                    
+                        # Append the result to the detections and features lists
+                        all_detections.append(result)
+                        all_features.append(result)
+
                 except Exception as e:
                     logging.error(f"Error processing {audio_file}: {e}")
+
+    # After processing all files, convert the results into DataFrames
+    detections_df = pd.DataFrame(all_detections)
+    features_df = pd.DataFrame(all_features)
+
+    # Save results to output files (Parquet format)
+    if not detections_df.empty:
+        logging.info(f"Saving detections to {args.detections_output}")
+        detections_df.to_parquet(args.detections_output, index=False)
+
+    if not features_df.empty:
+        logging.info(f"Saving features to {args.features_output}")
+        features_df.to_parquet(args.features_output, index=False)
+
+    logging.info("Processing complete!")
 
 if __name__ == "__main__":
     main()
