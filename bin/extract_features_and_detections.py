@@ -11,7 +11,7 @@ from audioclass.batch.base import BaseIterator
 from batdetect2 import api  # Assuming batdetect2 is the API you're using
 
 
-def load_model(model: str) -> ClipClassificationModel:
+def load_model(model: str):
     if model == "perch":
         from audioclass.models.perch import Perch
 
@@ -29,6 +29,8 @@ def load_model(model: str) -> ClipClassificationModel:
 
     if model == "batdetect2":
         from batdetect2 import api
+
+        return api
 
     raise ValueError(f"Unknown model {model}")
 
@@ -62,65 +64,44 @@ def get_iterator(
     raise ValueError(f"Unknown iterator {iterator}")
 
 
-def save_features(
-    predictions: list[data.ClipPrediction],
-    output: Path,
-) -> None:
-    results = []  # List to store all the results
-    
-    for prediction in predictions:
-        detections = prediction.detections  # Assuming 'detections' is a list of detection results
-        features = prediction.features  # Assuming 'features' contains the extracted features
-        
-        for i, detection in enumerate(detections):
-            result = {
-                'filename': str(prediction.clip.recording.path),
-                'species': detection['class'],
-                'logit': detection['det_prob'],
-                'start_time': detection['start_time'],
-                'end_time': detection['end_time'],
-                'low_freq': detection['low_freq'],
-                'high_freq': detection['high_freq'],
-            }
-
-            # Extract features for this detection
-            if features.shape[0] > i:  # Ensure the feature row exists
-                feature_row = features[i]
-                for j, feature_value in enumerate(feature_row):
-                    result[f'feature_{j}'] = feature_value
-
-            # Add the result to the list
-            results.append(result)
-
-    # Convert the results to a DataFrame and save
-    df = pd.DataFrame(results)
-    df.to_parquet(output, index=False)
-
-
 def save_detections(
-    detections: list[data.ClipPrediction],
+    detections: list[dict],  # Update this to use a list of dicts
     output: Path,
-    threshold: float = 0.75,
+    threshold: float = 0.3,
 ) -> None:
-    results = []
+    # Filter detections based on the threshold and save them
+    pd.DataFrame(
+        [
+            {
+                "path": detection['filename'],
+                "start_time": detection['start_time'],
+                "end_time": detection['end_time'],
+                "species": detection['species'],
+                "logit": detection['logit'],
+                "low_freq": detection['low_freq'],
+                "high_freq": detection['high_freq'],
+            }
+            for detection in detections
+            if detection['logit'] >= threshold
+        ]
+    ).to_parquet(output, index=False)
 
-    for prediction in detections:
-        for tag in prediction.tags:
-            if tag.score >= threshold:
-                result = {
-                    'path': str(prediction.clip.recording.path),
-                    'start_time': prediction.clip.start_time,
-                    'end_time': prediction.clip.end_time,
-                    'low_freq': prediction.clip.low_freq,
-                    'high_freq': prediction.clip.high_freq,
-                    'species': tag.tag.value,
-                    'logit': tag.score,
-                }
-                results.append(result)
-
-    # Convert to DataFrame and save
-    df = pd.DataFrame(results)
-    df.to_parquet(output, index=False)
+def save_features(
+    detections: list[dict],  # List of detection dictionaries
+    output: Path,
+) -> None:
+    # Save features corresponding to detections
+    pd.DataFrame(
+        [
+            {
+                "path": detection['filename'],
+                "start_time": detection['start_time'],
+                "end_time": detection['end_time'],
+                **{f"feature_{i}": detection.get(f"feature_{i}") for i in range(len(detection)-7)},  # Assuming 7 is the detection info fields
+            }
+            for detection in detections
+        ]
+    ).to_parquet(output, index=False)
 
 
 def parse_args():
@@ -170,19 +151,49 @@ def parse_args():
 def main():
     logging.basicConfig(level=logging.INFO)
     args = parse_args()
+
+    # Load the model (batdetect2 or another model)
     model = load_model(args.model)
-    iterator = get_iterator(
-        model,
-        args.directory,
-        iterator=args.iterator,
-        batch_size=args.batch_size,
-    )
-    output = model.process_iterable(iterator)
+    
+    # Iterate through files in the provided directory
+    for root, dirs, files in os.walk(args.directory):
+        for file_name in files:
+            if file_name.endswith(".WAV"):  # Process only WAV files
+                audio_file = os.path.join(root, file_name)  # Full file path
+                logging.info(f"Processing {audio_file}")
 
-    # Save features and detections
-    save_features(output, args.features_output)
-    save_detections(output, args.detections_output, threshold=args.threshold)
+                try:
+                    # Load audio and generate the spectrogram
+                    audio = api.load_audio(audio_file, max_duration=args.max_duration)  # Load audio
+                    spec = api.generate_spectrogram(audio, config=config)  # Generate spectrogram
 
+                    # Process the spectrogram to get detections and features
+                    detections, features = api.process_spectrogram(spec, config=config)
+
+                    # Loop over the detections to save detection info and features
+                    for i, detection in enumerate(detections):
+                        result = {
+                            'filename': audio_file,
+                            'species': detection['class'],
+                            'logit': detection['det_prob'],
+                            'start_time': detection['start_time'],
+                            'end_time': detection['end_time'],
+                            'low_freq': detection['low_freq'],
+                            'high_freq': detection['high_freq'],
+                        }
+
+                        # Extract and save the features for each detection
+                        if features.shape[0] > i:
+                            feature_row = features[i]
+                            for j, feature_value in enumerate(feature_row):
+                                result[f'feature_{j}'] = feature_value
+
+                        # Here, you would append or store 'result' in the appropriate way.
+                        # For example, you can append it to a list for further saving.
+                        # You can store the results as you were before in the DataFrame format.
+                    
+                except Exception as e:
+                    logging.error(f"Error processing {audio_file}: {e}")
 
 if __name__ == "__main__":
     main()
