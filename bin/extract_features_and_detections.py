@@ -26,6 +26,11 @@ def load_model(model: str) -> ClipClassificationModel:
 
         return BirdNETAnalyzer.load()
 
+    if model == "batdetect2": 
+        from audioclass.models.batdetect2 import batdetect2
+
+        return batdetect2.load() 
+
     raise ValueError(f"Unknown model {model}")
 
 
@@ -61,39 +66,128 @@ def get_iterator(
 def save_features(
     predictions: list[data.ClipPrediction],
     output: Path,
+    model_name: str = "",
 ) -> None:
-    pd.DataFrame(
-        [
-            {
-                "path": str(prediction.clip.recording.path),
-                "start_time": prediction.clip.start_time,
-                "end_time": prediction.clip.end_time,
-                **{feat.name: feat.value for feat in prediction.features},
-            }
-            for prediction in predictions
-        ]
-    ).to_parquet(output, index=False)
+    features_data = []
+    
+    for prediction in predictions:
+        # Create base record with common fields
+        base_record = {
+            "path": str(prediction.clip.recording.path),
+            "start_time": prediction.clip.start_time,
+            "end_time": prediction.clip.end_time,
+        }
+        
+        # Add features
+        feature_dict = {feat.name: feat.value for feat in prediction.features}
+        
+        # For batdetect2, extract additional fields if available
+        if model_name == "batdetect2" and hasattr(prediction.clip, "metadata"):
+            if "low_freq" in prediction.clip.metadata:
+                base_record["low_freq"] = prediction.clip.metadata["low_freq"]
+            if "high_freq" in prediction.clip.metadata:
+                base_record["high_freq"] = prediction.clip.metadata["high_freq"]
+        
+        # Combine base record with features
+        record = {**base_record, **feature_dict}
+        features_data.append(record)
+    
+    pd.DataFrame(features_data).to_parquet(output, index=False)
 
 
 def save_detections(
     predictions: list[data.ClipPrediction],
     output: Path,
     threshold: float = 0.1,
+    model_name: str = "",
 ) -> None:
-    pd.DataFrame(
-        [
-            {
-                "path": str(prediction.clip.recording.path),
-                "start_time": prediction.clip.start_time,
-                "end_time": prediction.clip.end_time,
-                "species": tag.tag.value,
-                "score": tag.score,
-            }
-            for prediction in predictions
-            for tag in prediction.tags
-            if tag.score >= threshold
-        ]
-    ).to_parquet(output, index=False)
+    detections_data = []
+    
+    for prediction in predictions:
+        # Create base record with common fields
+        base_path = str(prediction.clip.recording.path)
+        base_start = prediction.clip.start_time
+        base_end = prediction.clip.end_time
+        
+        # For batdetect2, handle multiple detections per prediction
+        if model_name == "batdetect2" and hasattr(prediction, "detections"):
+            for detection in prediction.detections:
+                record = {
+                    "path": base_path,
+                    "start_time": detection.get("start_time", base_start),
+                    "end_time": detection.get("end_time", base_end),
+                    "species": detection.get("class", "unknown"),
+                    "score": detection.get("det_prob", 0.0),
+                    "logit": detection.get("det_prob", 0.0),  # Same as score for compatibility
+                    "low_freq": detection.get("low_freq", None),
+                    "high_freq": detection.get("high_freq", None),
+                }
+                if record["score"] >= threshold:
+                    detections_data.append(record)
+        else:
+            # Handle standard tag-based predictions from other models
+            for tag in prediction.tags:
+                if tag.score >= threshold:
+                    record = {
+                        "path": base_path,
+                        "start_time": base_start,
+                        "end_time": base_end,
+                        "species": tag.tag.value,
+                        "score": tag.score,
+                        "logit": tag.score,  # Same as score for compatibility
+                    }
+                    
+                    # Add low_freq and high_freq if available in clip metadata
+                    if hasattr(prediction.clip, "metadata"):
+                        if "low_freq" in prediction.clip.metadata:
+                            record["low_freq"] = prediction.clip.metadata["low_freq"]
+                        if "high_freq" in prediction.clip.metadata:
+                            record["high_freq"] = prediction.clip.metadata["high_freq"]
+                    
+                    detections_data.append(record)
+    
+    pd.DataFrame(detections_data).to_parquet(output, index=False)
+
+
+def extract_batdetect2_features(
+    predictions: list[data.ClipPrediction],
+    output: Path,
+) -> None:
+    """Extract feature embeddings for batdetect2 detections."""
+    embeddings = []
+    
+    for prediction in predictions:
+        base_path = str(prediction.clip.recording.path)
+        
+        # Check if this prediction has features and detections
+        if hasattr(prediction, "detections") and hasattr(prediction, "features_array"):
+            detections = prediction.detections
+            features = prediction.features_array
+            
+            # Process each detection with its corresponding feature
+            for i, detection in enumerate(detections):
+                result = {
+                    'filename': base_path,
+                    'species': detection.get('class', 'unknown'),
+                    'logit': detection.get('det_prob', 0.0),
+                    'start_time': detection.get('start_time', prediction.clip.start_time),
+                    'end_time': detection.get('end_time', prediction.clip.end_time),
+                    'low_freq': detection.get('low_freq', None),
+                    'high_freq': detection.get('high_freq', None),
+                }
+                
+                # Extract the features for this detection
+                if features is not None and features.shape[0] > i:
+                    feature_row = features[i]
+                    # Add features as numbered columns
+                    for j, feature_value in enumerate(feature_row):
+                        result[f'feature_{j}'] = feature_value
+                
+                embeddings.append(result)
+    
+    # Save as parquet
+    if embeddings:
+        pd.DataFrame(embeddings).to_parquet(output, index=False)
 
 
 def parse_args():
@@ -112,11 +206,17 @@ def parse_args():
         help="Detections output",
     )
     parser.add_argument(
+        "--embeddings-output",
+        type=Path,
+        default=Path("embeddings.parquet"),
+        help="Feature embeddings output (for batdetect2)",
+    )
+    parser.add_argument(
         "--model",
         type=str,
         default="birdnet_analyzer",
         help="Model to use",
-        choices=["birdnet", "birdnet_analyzer", "perch"],
+        choices=["birdnet", "birdnet_analyzer", "perch", "batdetect2"],
     )
     parser.add_argument(
         "--iterator",
@@ -150,9 +250,24 @@ def main():
         iterator=args.iterator,
         batch_size=args.batch_size,
     )
+    
+    # Process audio files
+    logging.info(f"Processing audio files using {args.model}...")
     output = model.process_iterable(iterator)
-    save_features(output, args.features_output)
-    save_detections(output, args.detections_output, threshold=args.threshold)
+    
+    # Save outputs
+    logging.info(f"Saving features to {args.features_output}")
+    save_features(output, args.features_output, model_name=args.model)
+    
+    logging.info(f"Saving detections to {args.detections_output}")
+    save_detections(output, args.detections_output, threshold=args.threshold, model_name=args.model)
+    
+    # Extract and save embeddings for batdetect2
+    if args.model == "batdetect2":
+        logging.info(f"Saving feature embeddings to {args.embeddings_output}")
+        extract_batdetect2_features(output, args.embeddings_output)
+        
+    logging.info("Processing complete!")
 
 
 if __name__ == "__main__":
