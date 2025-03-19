@@ -14,7 +14,7 @@ from batdetect2.cli import api
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("--directory", type=Path, help="Audio dir")
-    parser.add_argument"--features-output",
+    parser.add_argument("--features-output",
         type=Path,
         default=Path("features.parquet"),
         help="Features output",
@@ -142,8 +142,8 @@ def main():
         max_duration=args.max_duration
     )
     
-        detections_df.to_parquet(args.detections_output, index=False)
-        features_df.to_parquet(args.features_output, index=False)
+    detections_df.to_parquet(args.detections_output, index=False)
+    features_df.to_parquet(args.features_output, index=False)
 
 if __name__ == "__main__":
     main()
