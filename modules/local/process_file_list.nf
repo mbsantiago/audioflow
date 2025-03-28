@@ -26,7 +26,8 @@ process process_file_list {
         --directory downloads/ \
         --features-output features.parquet \
         --detections-output detections.parquet \
-        --threshold !{threshold}
+        --threshold !{threshold} \
+        --recursive
 
     rm -rf downloads/
     '''

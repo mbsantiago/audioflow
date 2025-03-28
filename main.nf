@@ -2,7 +2,6 @@ params.chunk_size = 200
 params.file_list = 'example_files.txt'
 params.audio_dir = '/home/user/audio/'
 params.data_host = 'username@hostname'
-params.results_dir = 'outputs'
 params.threshold = 0.5
 
 include { merge_csv } from './modules/local/merge_csv'
@@ -46,12 +45,12 @@ workflow {
 
 output {
     metadata {
-        path params.results_dir
+        path "metadata"
     }
     features {
-        path params.results_dir
+        path "features"
     }
     detections {
-        path params.detections
+        path "detections"
     }
 }
