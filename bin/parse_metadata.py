@@ -1,4 +1,12 @@
-#!/bin/env python
+#!/usr/bin/env -S uv run --script
+# /// script
+# requires-python = "==3.9"
+# dependencies = [
+#     "metamoth",
+#     "pandas",
+#     "soundfile",
+# ]
+# ///
 
 import argparse
 import logging

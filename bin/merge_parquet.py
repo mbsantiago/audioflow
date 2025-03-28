@@ -1,4 +1,10 @@
-#!/bin/env python
+#!/usr/bin/env -S uv run --script
+# /// script
+# requires-python = ">=3.9"
+# dependencies = [
+#     "pyarrow",
+# ]
+# ///
 
 import argparse
 from pathlib import Path
