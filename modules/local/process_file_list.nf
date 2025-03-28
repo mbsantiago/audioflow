@@ -22,7 +22,7 @@ process process_file_list {
 
     parse_metadata.py --directory downloads/ --output metadata.csv
 
-    extract_features_and_detections_batdetect2.py \
+    process_audio_batdetect2.py \
         --directory downloads/ \
         --features-output features.parquet \
         --detections-output detections.parquet \
