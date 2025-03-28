@@ -6,9 +6,6 @@ process process_file_list {
     path 'file_list'
     val host
     val base_dir
-    val model
-    val iterator
-    val batch_size
     val threshold
 
     output:
@@ -25,14 +22,11 @@ process process_file_list {
 
     parse_metadata.py --directory downloads/ --output metadata.csv
 
-    extract_features_and_detections.py \
+    extract_features_and_detections_batdetect2.py \
         --directory downloads/ \
         --features-output features.parquet \
         --detections-output detections.parquet \
-        --threshold !{threshold} \
-        --model !{model} \
-        --iterator !{iterator} \
-        --batch_size !{batch_size}
+        --threshold !{threshold}
 
     rm -rf downloads/
     '''
