@@ -46,11 +46,14 @@ workflow {
 output {
     metadata {
         path "metadata"
+        mode "copy"
     }
     features {
         path "features"
+        mode "copy"
     }
     detections {
         path "detections"
+        mode "copy"
     }
 }
