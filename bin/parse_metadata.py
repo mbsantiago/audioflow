@@ -4,6 +4,7 @@
 # dependencies = [
 #     "metamoth",
 #     "pandas",
+#     "numpy",
 #     "soundfile",
 # ]
 # ///
@@ -11,14 +12,15 @@
 import argparse
 import logging
 from dataclasses import asdict, dataclass
+from multiprocessing import Pool
 from pathlib import Path
 
-import soundfile as sf
+import numpy as np
 import pandas as pd
+import soundfile as sf
 from metamoth import parse_metadata
-from metamoth.metadata import AMMetadata, ExtraMetadata
 from metamoth.mediainfo import MediaInfo
-from multiprocessing import Pool
+from metamoth.metadata import AMMetadata, ExtraMetadata
 
 
 @dataclass
@@ -51,8 +53,30 @@ def get_metadata(path: Path) -> Metadata | AMMetadata | None:
         return get_non_audiomoth_metadata(path)
     except Exception as e:
         logging.error("Error processing %s, Error: %s", path, e)
-        print(e)
         return None
+
+
+@dataclass
+class AcousticFeatures:
+    max_amplitude: float
+
+
+def get_acoustic_features(path: Path) -> AcousticFeatures:
+    audio, _ = sf.read(path)
+    return AcousticFeatures(max_amplitude=np.max(np.abs(audio)))
+
+
+def get_all_recording_data(path: Path) -> dict | None:
+    metadata = get_metadata(path)
+
+    if metadata is None:
+        return None
+
+    acoustic_features = get_acoustic_features(path)
+    return {
+        **asdict(metadata),
+        **asdict(acoustic_features),
+    }
 
 
 def parse_args():
@@ -74,9 +98,9 @@ def main():
     files = get_audio_files(args.directory)
 
     with Pool(args.nprocs) as p:
-        metadata = [m for m in p.map(get_metadata, files) if m is not None]
+        metadata = [m for m in p.map(get_all_recording_data, files) if m is not None]
 
-    df = pd.DataFrame([asdict(m) for m in metadata])
+    df = pd.DataFrame(metadata)
     df.to_csv(args.output, index=False)
 
 
