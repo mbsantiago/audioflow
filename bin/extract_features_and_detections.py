@@ -5,6 +5,8 @@
 #     "audioclass[all]",
 #     "pandas",
 #     "soundevent",
+#     "tensorflow==2.18.0",
+#     "numpy==1.26.4",
 # ]
 # ///
 
