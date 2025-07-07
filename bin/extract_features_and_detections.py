@@ -2,7 +2,7 @@
 # /// script
 # requires-python = "==3.10"
 # dependencies = [
-#     "audioclass[all]",
+#     "audioclass[all]>=0.2.4",
 #     "pandas",
 #     "soundevent",
 #     "tensorflow==2.18.0",
