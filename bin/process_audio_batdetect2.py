@@ -15,9 +15,8 @@ import os
 import uuid
 from pathlib import Path
 
-import numpy as np
 import pandas as pd
-from batdetect2.cli import api
+from batdetect2 import api
 
 
 def parse_args():
@@ -73,51 +72,66 @@ def find_audio_files(directory: Path, extensions: str, recursive=True):
     return list(Path(directory).glob(f"*.{extensions}"))
 
 
-def process_audio_files(audio_files, threshold, max_duration=None):
+def process_single_file(path: Path, config):
+    outputs = api.process_file(path, config=config)
+
+    detections = []
+    features = []
+
+    raw_dets = outputs["pred_dict"]["annotation"]
+
+    if len(raw_dets) == 0:
+        return detections, features
+
+    for detection, feat in zip(
+        raw_dets,
+        outputs["cnn_feats"],
+    ):
+        detection_id = str(uuid.uuid4())
+        detections.append(
+            {
+                "id": detection_id,
+                "file_path": str(path),
+                "file_name": os.path.basename(path),
+                "start_time": detection["start_time"],
+                "end_time": detection["end_time"],
+                "low_freq": detection["low_freq"],
+                "high_freq": detection["high_freq"],
+                "species": detection["class"],
+                "detection_score": detection["det_prob"],
+                "classification_score": detection.get("class_prob", None),
+            }
+        )
+        features.append(
+            {
+                "id": detection_id,
+                **{f"feature_{j}": f for j, f in enumerate(feat)},
+            }
+        )
+
+    return detections, features
+
+
+def process_audio_files(audio_files, threshold):
     config = api.get_config(
         detection_threshold=threshold,
         time_expansion_factor=1,
-        max_duration=max_duration,
+        cnn_features=True,
     )
 
     all_detections = []
     all_features = []
 
-    for i, audio_file in enumerate(audio_files):
+    for audio_file in audio_files:
         try:
-            audio = api.load_audio(audio_file, max_duration=max_duration)
-            spec = api.generate_spectrogram(audio, config=config)
-            detections, features = api.process_spectrogram(spec, config=config)
+            detections, features = process_single_file(audio_file, config)
+            all_detections.extend(detections)
+            all_features.extend(features)
 
-            filtered_detections = [d for d in detections if d["det_prob"] >= threshold]
-
-            for i, detection in enumerate(filtered_detections):
-                detection_id = str(uuid.uuid4())
-
-                detection_record = {
-                    "id": detection_id,
-                    "file_path": str(audio_file),
-                    "file_name": os.path.basename(audio_file),
-                    "start_time": detection["start_time"],
-                    "end_time": detection["end_time"],
-                    "low_freq": detection["low_freq"],
-                    "high_freq": detection["high_freq"],
-                    "species": detection["class"],
-                    "detection_score": detection["det_prob"],
-                    "classification_score": detection.get("class_prob", None),
-                }
-                all_detections.append(detection_record)
-
-                if features is not None and features.shape[0] > i:
-                    feature_row = features[i]
-                    feature_record = {"id": detection_id}
-
-                    for j, feature_value in enumerate(feature_row):
-                        feature_record[f"feature_{j}"] = feature_value
-
-                    all_features.append(feature_record)
-
-        except Exception as e:
+        except Exception as error:
+            logging.error(
+                f"Unknown error while processing file {audio_file}: {error}",
+            )
             pass
 
     detections_df = pd.DataFrame(all_detections)
@@ -145,7 +159,8 @@ def main():
         return
 
     detections_df, features_df = process_audio_files(
-        audio_files, args.threshold, max_duration=args.max_duration
+        audio_files,
+        args.threshold,
     )
 
     detections_df.to_parquet(args.detections_output, index=False)
