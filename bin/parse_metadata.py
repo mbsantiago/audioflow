@@ -61,9 +61,13 @@ class AcousticFeatures:
     max_amplitude: float
 
 
-def get_acoustic_features(path: Path) -> AcousticFeatures:
-    audio, _ = sf.read(path)
-    return AcousticFeatures(max_amplitude=np.max(np.abs(audio)))
+def get_acoustic_features(path: Path) -> AcousticFeatures | None:
+    try:
+        audio, _ = sf.read(path)
+        return AcousticFeatures(max_amplitude=np.max(np.abs(audio)))
+    except Exception as e:
+        logging.error("Error processing %s, Error: %s", path, e)
+        return None
 
 
 def get_all_recording_data(path: Path) -> dict | None:
@@ -73,6 +77,10 @@ def get_all_recording_data(path: Path) -> dict | None:
         return None
 
     acoustic_features = get_acoustic_features(path)
+
+    if acoustic_features is None:
+        return {**asdict(metadata)}
+
     return {
         **asdict(metadata),
         **asdict(acoustic_features),
