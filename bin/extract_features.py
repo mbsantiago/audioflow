@@ -2,7 +2,7 @@
 # /// script
 # requires-python = "==3.9"
 # dependencies = [
-#     "audioclass[all]",
+#     "audioclass[all]>=0.2.5",
 #     "pandas",
 #     "soundevent",
 # ]
